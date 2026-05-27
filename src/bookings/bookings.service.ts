@@ -141,7 +141,7 @@ export class BookingsService {
       await this.prisma.payment.update({
         where: { bookingId: id },
         data: {
-          status: PaymentStatus.REFUNDED, // ✅ tanpa refundedAt
+          status: PaymentStatus.REFUNDED,
         },
       });
     }

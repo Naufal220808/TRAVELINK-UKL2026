@@ -53,17 +53,48 @@ export class ReviewsService {
     }
 
     if (booking.userId !== userId) {
-      throw new BadRequestException('Anda tidak berhak memberi review ini');
+      throw new BadRequestException(
+        'Anda tidak berhak memberi review ini',
+      );
     }
 
-    if (booking.status !== 'CONFIRMED' && booking.status !== 'COMPLETED') {
-      throw new BadRequestException('Hanya booking yang sudah dikonfirmasi yang bisa direview');
+    if (
+      booking.status !== 'CONFIRMED' &&
+      booking.status !== 'COMPLETED'
+    ) {
+      throw new BadRequestException(
+        'Hanya booking yang sudah dikonfirmasi yang bisa direview',
+      );
     }
 
     if (booking.review) {
-      throw new BadRequestException('Booking ini sudah direview');
+      throw new BadRequestException(
+        'Booking ini sudah direview',
+      );
     }
 
-    return this.prisma.review
+    return this.prisma.review.create({
+      data: {
+        rating: dto.rating,
+        comment: dto.comment,
+        userId,
+        vehicleId: booking.vehicleId,
+        bookingId: booking.id,
+      },
+    });
+  }
+
+  async remove(id: number) {
+    const review = await this.prisma.review.findUnique({
+      where: { id },
+    });
+
+    if (!review) {
+      throw new NotFoundException('Review tidak ditemukan');
+    }
+
+    return this.prisma.review.delete({
+      where: { id },
+    });
   }
 }
