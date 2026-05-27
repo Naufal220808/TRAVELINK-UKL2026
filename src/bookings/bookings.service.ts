@@ -1,6 +1,12 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
+import { BookingStatus, PaymentStatus } from '@prisma/client';
 
 @Injectable()
 export class BookingsService {
@@ -105,7 +111,7 @@ export class BookingsService {
       data: {
         bookingId: booking.id,
         amount: totalPrice,
-        status: 'PENDING',
+        status: PaymentStatus.PENDING,
       },
     });
 
@@ -116,35 +122,74 @@ export class BookingsService {
     const booking = await this.findOne(id);
 
     if (booking.userId !== userId) {
-      throw new BadRequestException('Anda tidak berhak membatalkan booking ini');
+      throw new ForbiddenException('Anda tidak berhak membatalkan booking ini');
     }
 
-    if (booking.status !== 'PENDING_PAYMENT') {
-      throw new BadRequestException('Booking tidak bisa dibatalkan');
+    const cancellableStatuses: BookingStatus[] = [
+      BookingStatus.PENDING_PAYMENT,
+      BookingStatus.CONFIRMED,
+    ];
+
+    if (!cancellableStatuses.includes(booking.status)) {
+      throw new BadRequestException(
+        `Booking dengan status "${booking.status}" tidak dapat dibatalkan`,
+      );
+    }
+
+    // ✅ Jika sudah CONFIRMED (sudah bayar) → refund payment
+    if (booking.status === BookingStatus.CONFIRMED && booking.payment) {
+      await this.prisma.payment.update({
+        where: { bookingId: id },
+        data: {
+          status: PaymentStatus.REFUNDED, // ✅ tanpa refundedAt
+        },
+      });
     }
 
     return this.prisma.booking.update({
       where: { id },
-      data: { status: 'CANCELLED' },
+      data: { status: BookingStatus.CANCELLED },
+      include: {
+        vehicle: { include: { destination: true, category: true } },
+        payment: true,
+      },
     });
   }
 
   async updateStatus(id: number, status: string) {
+    const validStatuses = Object.values(BookingStatus);
+
+    if (!validStatuses.includes(status as BookingStatus)) {
+      throw new BadRequestException(
+        `Status tidak valid. Status yang tersedia: ${validStatuses.join(', ')}`,
+      );
+    }
+
     await this.findOne(id);
 
     return this.prisma.booking.update({
       where: { id },
-      data: { status: status as any },
+      data: { status: status as BookingStatus },
+      include: {
+        vehicle: { include: { destination: true, category: true } },
+        payment: true,
+      },
     });
   }
 
   async confirmPayment(id: number) {
     const booking = await this.findOne(id);
 
+    if (booking.status !== BookingStatus.PENDING_PAYMENT) {
+      throw new BadRequestException(
+        'Hanya booking dengan status PENDING_PAYMENT yang bisa dikonfirmasi',
+      );
+    }
+
     await this.prisma.payment.update({
       where: { bookingId: id },
       data: {
-        status: 'PAID',
+        status: PaymentStatus.PAID,
         paidAt: new Date(),
         method: 'MANUAL',
       },
@@ -152,10 +197,10 @@ export class BookingsService {
 
     return this.prisma.booking.update({
       where: { id },
-      data: { status: 'CONFIRMED' },
+      data: { status: BookingStatus.CONFIRMED },
       include: {
         payment: true,
-        vehicle: true,
+        vehicle: { include: { destination: true, category: true } },
       },
     });
   }
