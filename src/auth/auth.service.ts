@@ -13,7 +13,7 @@ export class AuthService {
     private jwt: JwtService,
   ) {}
 
-  async register(dto: RegisterDto) {
+async register(dto: RegisterDto) {
     const existing = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
@@ -29,6 +29,7 @@ export class AuthService {
         name: dto.name,
         email: dto.email,
         password: hashedPassword,
+        role: dto.role ?? 'CUSTOMER',
       },
     });
 
@@ -42,7 +43,6 @@ export class AuthService {
       },
     };
   }
-
   async login(dto: LoginDto) {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
