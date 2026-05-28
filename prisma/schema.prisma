@@ -80,7 +80,7 @@ model Destination {
   slug     String  @unique
   type     String
   city     String
-  image    String?
+  image    String? @db.Text
   isActive Boolean @default(true)
 
   createdAt DateTime @default(now())
