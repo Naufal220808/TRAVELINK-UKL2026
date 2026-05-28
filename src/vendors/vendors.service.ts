@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateVendorDto } from './dto/create-vendor.dto';
 import { UpdateVendorDto } from './dto/update-vendor.dto';
+import { truncate } from 'fs';
 
 @Injectable()
 export class VendorsService {
@@ -9,7 +10,7 @@ export class VendorsService {
 
   async findAll() {
     return this.prisma.vendor.findMany({
-      include: { user: { select: { id: true, name: true, email: true } } },
+      include: { user: { select: { id: true, name: true, email: true, phone: true } } },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -18,7 +19,7 @@ export class VendorsService {
     const vendor = await this.prisma.vendor.findUnique({
       where: { id },
       include: {
-        user: { select: { id: true, name: true, email: true } },
+        user: { select: { id: true, name: true, email: true, phone: true } },
         vehicles: true,
       },
     });
