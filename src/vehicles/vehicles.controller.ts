@@ -1,4 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards, ParseIntPipe } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { VehiclesService } from './vehicles.service';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
@@ -6,25 +7,31 @@ import { JwtGuard } from '../auth/jwt.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 
+@ApiTags('Vehicles')
 @Controller('vehicles')
 export class VehiclesController {
   constructor(private readonly vehiclesService: VehiclesService) {}
 
+  @ApiOperation({ summary: 'Lihat semua kendaraan beserta kategori, destinasi, vendor' })
   @Get()
   findAll() {
     return this.vehiclesService.findAll();
   }
 
+  @ApiOperation({ summary: 'Lihat kendaraan berdasarkan destinasi' })
   @Get('destination/:destinationId')
   findByDestination(@Param('destinationId', ParseIntPipe) destinationId: number) {
     return this.vehiclesService.findByDestination(destinationId);
   }
 
+  @ApiOperation({ summary: 'Lihat detail kendaraan beserta review' })
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.vehiclesService.findOne(id);
   }
 
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Tambah kendaraan — body: vendorId, categoryId, destinationId, name, description?, capacity, pricePerDay' })
   @UseGuards(JwtGuard, RolesGuard)
   @Roles('ADMIN', 'VENDOR')
   @Post()
@@ -32,6 +39,8 @@ export class VehiclesController {
     return this.vehiclesService.create(dto);
   }
 
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Edit kendaraan — body: name?, description?, capacity?, pricePerDay?, status?, categoryId?, destinationId?' })
   @UseGuards(JwtGuard, RolesGuard)
   @Roles('ADMIN', 'VENDOR')
   @Put(':id')
@@ -39,6 +48,8 @@ export class VehiclesController {
     return this.vehiclesService.update(id, dto);
   }
 
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Hapus kendaraan' })
   @UseGuards(JwtGuard, RolesGuard)
   @Roles('ADMIN')
   @Delete(':id')
