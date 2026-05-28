@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
@@ -13,7 +14,7 @@ export class AuthService {
     private jwt: JwtService,
   ) {}
 
-async register(dto: RegisterDto) {
+  async register(dto: RegisterDto) {
     const existing = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
@@ -29,6 +30,7 @@ async register(dto: RegisterDto) {
         name: dto.name,
         email: dto.email,
         password: hashedPassword,
+        phone: dto.phone,
         role: dto.role ?? 'CUSTOMER',
       },
     });
@@ -39,10 +41,12 @@ async register(dto: RegisterDto) {
         id: user.id,
         name: user.name,
         email: user.email,
+        phone: user.phone,
         role: user.role,
       },
     };
   }
+
   async login(dto: LoginDto) {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
@@ -71,9 +75,24 @@ async register(dto: RegisterDto) {
         id: user.id,
         name: user.name,
         email: user.email,
+        phone: user.phone,
         role: user.role,
       },
     };
+  }
+
+  async updateProfile(userId: number, dto: UpdateProfileDto) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: dto,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+      },
+    });
   }
 
   async changeRole(userId: number, role: Role) {

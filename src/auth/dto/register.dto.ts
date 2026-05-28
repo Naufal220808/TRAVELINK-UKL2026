@@ -15,6 +15,10 @@ export class RegisterDto {
   password: string;
 
   @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @IsOptional()
   @IsEnum(Role)
   role?: Role;
 }
