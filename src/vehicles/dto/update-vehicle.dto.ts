@@ -4,6 +4,16 @@ import { VehicleStatus } from '@prisma/client';
 
 export class UpdateVehicleDto {
   @IsOptional()
+  @IsInt()
+  @Type(() => Number)
+  categoryId?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Type(() => Number)
+  destinationId?: number;
+
+  @IsOptional()
   @IsString()
   name?: string;
 
