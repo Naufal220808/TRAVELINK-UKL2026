@@ -1,54 +1,19 @@
-import { Body, Controller, Post, Get, Put, Param, UseGuards, ParseIntPipe } from '@nestjs/common';
+import { Module } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
-import { RegisterDto } from './dto/register.dto';
-import { LoginDto } from './dto/login.dto';
-import { UpdateProfileDto } from './dto/update-profile.dto';
-import { ChangeRoleDto } from './dto/change-role.dto';
-import { JwtGuard } from './jwt.guard';
+import { AuthController } from './auth.controller';
 import { RolesGuard } from './roles.guard';
-import { Roles } from './roles.decorator';
-import { CurrentUser } from './current-user.decorator';
 
-@Controller('auth')
-export class AuthController {
-  constructor(private readonly authService: AuthService) {}
-
-  @Post('register')
-  register(@Body() dto: RegisterDto) {
-    return this.authService.register(dto);
-  }
-
-  @Post('login')
-  login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
-  }
-
-  @UseGuards(JwtGuard)
-  @Get('me')
-  me(@CurrentUser() user: any) {
-    return user;
-  }
-
-  @UseGuards(JwtGuard)
-  @Put('profile')
-  updateProfile(@CurrentUser() user: any, @Body() dto: UpdateProfileDto) {
-    return this.authService.updateProfile(user.sub, dto);
-  }
-
-  @UseGuards(JwtGuard, RolesGuard)
-  @Roles('ADMIN')
-  @Get('admin-only')
-  adminOnly() {
-    return { message: 'Hanya admin yang bisa akses ini' };
-  }
-
-  @UseGuards(JwtGuard, RolesGuard)
-  @Roles('ADMIN')
-  @Put('change-role/:id')
-  changeRole(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: ChangeRoleDto,
-  ) {
-    return this.authService.changeRole(id, dto.role);
-  }
-}
+@Module({
+  imports: [
+    JwtModule.register({
+      global: true,
+      secret: process.env.JWT_SECRET,
+      signOptions: { expiresIn: process.env.JWT_EXPIRES_IN as any },
+    }),
+  ],
+  providers: [AuthService, RolesGuard],
+  controllers: [AuthController],
+  exports: [RolesGuard],
+})
+export class AuthModule {}

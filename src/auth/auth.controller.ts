@@ -2,6 +2,7 @@ import { Body, Controller, Post, Get, Put, Param, UseGuards, ParseIntPipe } from
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangeRoleDto } from './dto/change-role.dto';
 import { JwtGuard } from './jwt.guard';
 import { RolesGuard } from './roles.guard';
@@ -26,6 +27,12 @@ export class AuthController {
   @Get('me')
   me(@CurrentUser() user: any) {
     return user;
+  }
+
+  @UseGuards(JwtGuard)
+  @Put('profile')
+  updateProfile(@CurrentUser() user: any, @Body() dto: UpdateProfileDto) {
+    return this.authService.updateProfile(user.sub, dto);
   }
 
   @UseGuards(JwtGuard, RolesGuard)
