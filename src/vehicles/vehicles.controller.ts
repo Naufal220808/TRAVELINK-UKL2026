@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { VehiclesService } from './vehicles.service';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
+import { CreateVehicleImageDto } from './dto/create-vehicle-image.dto';
 import { JwtGuard } from '../auth/jwt.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -55,5 +56,23 @@ export class VehiclesController {
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.vehiclesService.remove(id);
+  }
+
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Tambah gambar kendaraan (Admin/Vendor)' })
+  @UseGuards(JwtGuard, RolesGuard)
+  @Roles('ADMIN', 'VENDOR')
+  @Post('images')
+  addImage(@Body() dto: CreateVehicleImageDto) {
+    return this.vehiclesService.addImage(dto);
+  }
+
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Hapus gambar kendaraan (Admin/Vendor)' })
+  @UseGuards(JwtGuard, RolesGuard)
+  @Roles('ADMIN', 'VENDOR')
+  @Delete('images/:id')
+  removeImage(@Param('id', ParseIntPipe) id: number) {
+    return this.vehiclesService.removeImage(id);
   }
 }

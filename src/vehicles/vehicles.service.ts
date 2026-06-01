@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
+import { CreateVehicleImageDto } from './dto/create-vehicle-image.dto';
 
 @Injectable()
 export class VehiclesService {
@@ -77,5 +78,27 @@ export class VehiclesService {
     });
 
     return { message: 'Kendaraan sudah dihapus' };
+  }
+
+  async addImage(dto: CreateVehicleImageDto) {
+    return this.prisma.vehicleImage.create({
+      data: {
+        vehicleId: dto.vehicleId,
+        url: dto.url,
+        isPrimary: dto.isPrimary ?? false,
+      },
+    });
+  }
+
+  async removeImage(id: number) {
+    const image = await this.prisma.vehicleImage.findUnique({ where: { id } });
+
+    if (!image) {
+      throw new NotFoundException('Gambar tidak ditemukan');
+    }
+
+    await this.prisma.vehicleImage.delete({ where: { id } });
+
+    return { message: 'Gambar berhasil dihapus' };
   }
 }
