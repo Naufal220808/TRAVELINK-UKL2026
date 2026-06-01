@@ -51,6 +51,28 @@ export class BookingsService {
     });
   }
 
+  async findVendorBookings(userId: number) {
+    const vendor = await this.prisma.vendor.findUnique({
+      where: { userId },
+    });
+
+    if (!vendor) {
+      throw new NotFoundException('Vendor tidak ditemukan');
+    }
+
+    return this.prisma.booking.findMany({
+      where: {
+        vehicle: { vendorId: vendor.id },
+      },
+      include: {
+        user: { select: { id: true, name: true, email: true, phone: true } },
+        vehicle: { include: { destination: true, category: true } },
+        payment: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async findOne(id: number) {
     const booking = await this.prisma.booking.findUnique({
       where: { id },
@@ -136,7 +158,6 @@ export class BookingsService {
       );
     }
 
-    // ✅ Jika sudah CONFIRMED (sudah bayar) → refund payment
     if (booking.status === BookingStatus.CONFIRMED && booking.payment) {
       await this.prisma.payment.update({
         where: { bookingId: id },

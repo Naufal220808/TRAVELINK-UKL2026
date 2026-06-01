@@ -11,7 +11,7 @@ import { CurrentUser } from '../auth/current-user.decorator';
 @ApiBearerAuth()
 @Controller('bookings')
 export class BookingsController {
-  constructor(private readonly bookingsService: BookingsService) { }
+  constructor(private readonly bookingsService: BookingsService) {}
 
   @UseGuards(JwtGuard, RolesGuard)
   @Roles('ADMIN')
@@ -26,6 +26,14 @@ export class BookingsController {
   @Get('my')
   findMyBookings(@CurrentUser() user: any) {
     return this.bookingsService.findMyBookings(user.sub);
+  }
+
+  @UseGuards(JwtGuard, RolesGuard)
+  @Roles('VENDOR')
+  @ApiOperation({ summary: 'Get vendor bookings (Vendor only)' })
+  @Get('vendor')
+  findVendorBookings(@CurrentUser() user: any) {
+    return this.bookingsService.findVendorBookings(user.sub);
   }
 
   @UseGuards(JwtGuard)
